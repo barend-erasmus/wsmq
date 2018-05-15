@@ -30,4 +30,4 @@ rm -rf /opt/repositories/wsmq
 npm install --prefix /opt/wsmq
 
 # Run
-pm2 start --name wsmq /opt/wsmq/app.js
+pm2 start --name wsmq /opt/wsmq/message-queue-server.js

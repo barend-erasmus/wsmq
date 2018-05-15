@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Web Socket Message Queue",
   "scripts": {
+    "build": "gulp build & tsc",
     "lint": "tslint ./src/**/*.ts --fix --exclude ./src/**/*.d.ts",
     "start": "npm run build & node ./dist/app.js --dev"
   },
