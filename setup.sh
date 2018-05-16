@@ -9,6 +9,15 @@ ufw allow 'Nginx Full'
 systemctl enable nginx
 systemctl start nginx
 
+# Install Let's Encrypt
+apt-get update
+apt-get install -y letsencrypt
+
+# Obtain SSL Certificates
+# systemctl stop nginx
+# letsencrypt certonly --standalone --agree-tos --email developersworkspace@gmail.com -d wsmq.openservices.co.za
+# systemctl start nginx
+
 # Install node.js
 curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash -
 apt-get install -y nodejs
