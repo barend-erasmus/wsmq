@@ -1,11 +1,11 @@
-import * as WebSocket from 'ws';
+import * as WS from 'ws';
 import { CommandBuilder } from './builders/command-builder';
 import { Command } from './commands/command';
 import { PublishCommand } from './commands/publish';
 import { SubscribeCommand } from './commands/subscribe';
 import { MessageQueueClientConnection } from './models/message-queue-client-connection';
 
-const server: WebSocket.Server = new WebSocket.Server({ port: 8801 });
+const server: WS.Server = new WS.Server({ port: 8801 });
 
 const messageQueueClientConnections: MessageQueueClientConnection[] = [];
 

@@ -1,5 +1,5 @@
 import * as uuid from 'uuid';
-import * as WebSocket from 'ws';
+import * as WS from 'ws';
 import { CommandBuilder } from './builders/command-builder';
 import { Command } from './commands/command';
 import { PublishCommand } from './commands/publish';
@@ -18,13 +18,7 @@ export class MessageQueueClient {
 
     public connect(): Promise<void> {
         return new Promise((resolve: () => void, reject: (err: Error) => void) => {
-            if (typeof (WebSocket) === 'function') {
-                this.socket = new WebSocket(this.host);
-            }
-
-            if (typeof (WebSocket) === 'object') {
-                this.socket = new (window as any).WebSocket(this.host);
-            }
+            this.socket = typeof(WebSocket) === 'undefined' ? new WS(this.host) : new WebSocket(this.host);
 
             this.socket.onclose = (closeEvent: { code: number }) => this.onClose(closeEvent);
 

@@ -1,13 +1,13 @@
 {
   "name": "wsmq",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Web Socket Message Queue",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "gulp build & tsc",
     "lint": "tslint ./src/**/*.ts --fix --exclude ./src/**/*.d.ts",
-    "start": "npm run build & node ./dist/app.js --dev"
+    "start": "npm run build & node ./dist/example.js --dev"
   },
   "repository": {
     "type": "git",
