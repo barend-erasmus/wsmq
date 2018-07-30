@@ -129,14 +129,6 @@ const toastr_notification_helper_1 = require("./toastr-notification-helper");
         showNotification(data.image, data.message, data.title, data.url);
     }, ['wsmq-demo']);
     yield messageQueueClient.connect();
-    setTimeout(() => {
-        messageQueueClient.send('wsmq-demo', {
-            image: 'http://styleguide.euromonitor.com/assets/images/brand-guide/euromonitor/the-signature/alternate-symbol.png',
-            message: `The file you created called 'Alcoholic Drink March 2018' is now available. You can download it from your Downloads page in the My Content area of Passport.`,
-            title: 'Download now available',
-            url: 'http://www.euromonitor.com',
-        });
-    }, 5000);
 }))();
 function showNotification(image, message, title, url) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -182,10 +174,23 @@ class MessageQueueClient {
             this.socket.onclose = (closeEvent) => this.onClose(closeEvent);
             this.socket.onmessage = (event) => this.onMessage(event);
             this.socket.onopen = (openEvent) => this.onOpen(openEvent, resolve);
+            this.socket.onerror = (event) => {
+                this.socket.onclose = () => { };
+                this.socket.close();
+                this.delay(2000).then(() => {
+                    console.log('reconnecting');
+                    this.connect();
+                });
+            };
         });
     }
     send(channel, data) {
         this.socket.send(JSON.stringify(new publish_1.PublishCommand(channel, data)));
+    }
+    delay(milliseconds) {
+        return new Promise((resolve, reject) => {
+            setTimeout(resolve, milliseconds);
+        });
     }
     onClose(closeEvent) {
         if (closeEvent.code === 1000) {

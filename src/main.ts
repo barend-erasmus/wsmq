@@ -4,6 +4,7 @@ import { MessageQueueServer } from './message-queue-server';
 
 commander
   .command('start')
+  .option('-n --nodes <nodes>', 'Nodes')
   .option('-p --port <port>', 'Port')
   .action((command: any) => {
     if (!command.port) {
@@ -16,7 +17,10 @@ commander
       return;
     }
 
-    const messageQueueServer: MessageQueueServer = new MessageQueueServer(command.port);
+    const messageQueueServer: MessageQueueServer = new MessageQueueServer(
+      command.port,
+      command.nodes ? command.nodes.split(';') : null,
+    );
 
     messageQueueServer.listen();
 

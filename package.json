@@ -1,12 +1,12 @@
 {
   "name": "wsmq",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Web Socket Message Queue",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "build-demo": "tsc & browserify ./dist/demo/main.js --ignore body-parser --ignore chalk --ignore commander --ignore express --ignore ws --s WSMQDemo -o ./src/demo/main.bundle.js & http-server -o http://localhost:8081/index.html -p 8081 ./src/demo",
+    "build-demo": "tsc & browserify ./dist/demo/main.js --ignore body-parser --ignore commander --ignore express --ignore ws --s WSMQDemo -o ./src/demo/main.bundle.js & http-server -o http://localhost:8082/index.html -p 8082 ./src/demo",
     "start": "npm run build & node ./dist/main.js start --port 8080"
   },
   "repository": {

@@ -7,6 +7,7 @@ import { MessageQueueClientConnection } from './models/message-queue-client-conn
 import * as http from 'http';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
+import { MessageQueueClient } from './message-queue-client';
 
 export class MessageQueueServer {
   protected commandBuilder: CommandBuilder = null;
@@ -19,7 +20,7 @@ export class MessageQueueServer {
 
   protected webSocketServer: WS.Server = null;
 
-  constructor(protected port: number) {
+  constructor(protected port: number, protected nodes: Array<string>) {
     this.commandBuilder = new CommandBuilder();
 
     this.configureExpressApplication();
@@ -27,11 +28,11 @@ export class MessageQueueServer {
     this.configureHttpServer();
 
     this.configureWebSocketServer();
+
+    this.connectToNodes();
   }
 
   public async listen(): Promise<void> {
-    
-
     this.httpServer.listen(this.port);
   }
 
@@ -40,8 +41,8 @@ export class MessageQueueServer {
 
     this.expressApplication.use(bodyParser.json());
 
-    this.expressApplication.post('/', (request: express.Request, response: express.Response) => {
-      this.onMessage(request.body, null);
+    this.expressApplication.post('/:channel', (request: express.Request, response: express.Response) => {
+      this.onMessage(new PublishCommand(request.params.channel, request.body), null);
 
       response.send('OK');
     });
@@ -76,7 +77,9 @@ export class MessageQueueServer {
       const publishCommand: PublishCommand = command as PublishCommand;
 
       for (const c of this.messageQueueClientConnections) {
-        if (c.isSubscribed(publishCommand.channel)) {
+        if (c.isSubscribed('global-broadcast-channel')) {
+          c.send(publishCommand);
+        } else if (c.isSubscribed(publishCommand.channel)) {
           c.send(publishCommand);
         }
       }
@@ -98,6 +101,24 @@ export class MessageQueueServer {
 
     if (index > -1) {
       this.messageQueueClientConnections.splice(index, 1);
+    }
+  }
+
+  protected connectToNodes(): void {
+    if (!this.nodes) {
+      return;
+    }
+  
+    for (const node of this.nodes) {
+      const messageQueueClient: MessageQueueClient = new MessageQueueClient(node, (channel: string, data: any, messageQueueClient: MessageQueueClient) => {
+        for (const c of this.messageQueueClientConnections) {
+          if (c.isSubscribed(channel)) {
+            c.send(new PublishCommand(channel, data));
+          }
+        }
+      }, ['global-broadcast-channel']);
+
+      messageQueueClient.connect();
     }
   }
 }

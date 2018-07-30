@@ -15,18 +15,33 @@ export class MessageQueueClient {
 
   public connect(): Promise<void> {
     return new Promise((resolve: () => void, reject: (err: Error) => void) => {
-      this.socket = typeof WebSocket === 'undefined' ? new WS(this.host) as any : new WebSocket(this.host) as any;
+      this.socket = typeof WebSocket === 'undefined' ? (new WS(this.host) as any) : (new WebSocket(this.host) as any);
 
       this.socket.onclose = (closeEvent: { code: number }) => this.onClose(closeEvent);
 
       this.socket.onmessage = (event: { data: any }) => this.onMessage(event);
 
       this.socket.onopen = (openEvent: {}) => this.onOpen(openEvent, resolve);
+
+      this.socket.onerror = (event: Event) => {
+        this.socket.onclose = () => {};
+        this.socket.close();
+
+        this.delay(2000).then(() => {
+          this.connect();
+        });
+      };
     });
   }
 
   public send(channel: string, data: any): void {
     this.socket.send(JSON.stringify(new PublishCommand(channel, data)));
+  }
+
+  protected delay(milliseconds: number): Promise<void> {
+    return new Promise((resolve: () => void, reject: (error: Error) => void) => {
+      setTimeout(resolve, milliseconds);
+    });
   }
 
   protected onClose(closeEvent: { code: number }): void {

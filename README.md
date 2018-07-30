@@ -8,9 +8,19 @@ Web Socket Message Queue
 
 `npm install -g wsmq`
 
-### Running
+### Usage
 
-`wsmq start --port 8080`
+`wsmq start --nodes ws://127.0.0.1:8081;ws://127.0.0.1:8082  --port 8080`
+
+```
+Usage: start [options]
+
+  Options:
+
+    -n --nodes <nodes>  Nodes
+    -p --port <port>    Port
+    -h, --help          output usage information
+```
 
 ### Uninstalling
 
