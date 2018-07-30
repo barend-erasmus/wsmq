@@ -28,11 +28,19 @@ Usage: start [options]
 
 ## Examples
 
-### Server
+### Servers
+
+* [Node.js (Typescript)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/servers/node-js-typescript.md)
+* [Node.js (Javascript)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/servers/node-js-javascript.md)
+* [Linux (Systemd)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/servers/linux-systemd.md)
+
+### Clients
 
 * [Node.js (Typescript)]()
 * [Node.js (Javascript)]()
-* [Linux (Systemd)]()
+* [CSharp (WebSockets)]()
+* [CSharp (REST)]()
+* [cURL]()
 
 ### Example Client
 
@@ -44,7 +52,7 @@ const messageQueueClient = new MessageQueueClient(
     (channel: string, data: any, messageQueueClient: MessageQueueClient) => {
         // TODO: Handle messages here...
     },
-    ['<your-channel-here>'],
+    ['<insert-your-channel-here>'],
 );
 
 await messageQueueClient.connect();
