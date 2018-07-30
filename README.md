@@ -36,8 +36,8 @@ Usage: start [options]
 
 ### Clients
 
-* [Node.js (Typescript)]()
-* [Node.js (Javascript)]()
+* [Node.js (Typescript)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/clients/node-js-typescript.md)
+* [Node.js (Javascript)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/clients/node-js-javascript.md)
 * [CSharp (WebSockets)]()
 * [CSharp (REST)]()
-* [cURL]()
+* [cURL](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/clients/curl.md)
