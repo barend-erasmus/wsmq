@@ -26,6 +26,14 @@ Usage: start [options]
 
 `npm uninstall -g wsmq`
 
+## Examples
+
+### Server
+
+* [Node.js (Typescript)]()
+* [Node.js (Javascript)]()
+* [Linux (Systemd)]()
+
 ### Example Client
 
 ```typescript
