@@ -5,46 +5,66 @@ import { PublishCommand } from './commands/publish';
 import { SubscribeCommand } from './commands/subscribe';
 import { MessageQueueClientConnection } from './models/message-queue-client-connection';
 
-const server: WS.Server = new WS.Server({ port: 8801 });
+export class MessageQueueServer {
+  protected commandBuilder: CommandBuilder = null;
 
-const messageQueueClientConnections: MessageQueueClientConnection[] = [];
+  protected messageQueueClientConnections: Array<MessageQueueClientConnection> = null;
 
-const commandBuilder: CommandBuilder = new CommandBuilder();
+  protected server: WS.Server = null;
 
-server.on('connection', (socket: WebSocket) => {
+  constructor(protected port: number) {}
+
+  public async listen(): Promise<void> {
+    this.commandBuilder = new CommandBuilder();
+
+    this.messageQueueClientConnections = [];
+
+    this.server = new WS.Server({ port: this.port });
+
+    this.server.on('connection', (socket: WebSocket) => this.onConnection(socket));
+  }
+
+  protected onConnection(socket: WS.WebSocket): void {
     const messageQueueClientConnection: MessageQueueClientConnection = new MessageQueueClientConnection(socket, []);
 
-    messageQueueClientConnections.push(messageQueueClientConnection);
+    this.messageQueueClientConnections.push(messageQueueClientConnection);
 
-    messageQueueClientConnection.socket.on('message', (message: string) => {
-        const command: Command = commandBuilder.build(JSON.parse(message));
+    messageQueueClientConnection.socket.on('message', (message: string) =>
+      this.onMessage(message, messageQueueClientConnection),
+    );
 
-        if (command instanceof PublishCommand) {
-            const publishCommand: PublishCommand = command as PublishCommand;
+    messageQueueClientConnection.socket.on('close', () => this.onClose(messageQueueClientConnection));
+  }
 
-            for (const c of messageQueueClientConnections) {
-                if (c.subscribedChannels.indexOf(publishCommand.channel) > -1) {
-                    c.socket.send(JSON.stringify(publishCommand));
-                }
-            }
+  protected onMessage(message: string, messageQueueClientConnection: MessageQueueClientConnection): void {
+    const command: Command = this.commandBuilder.build(JSON.parse(message));
+
+    if (command instanceof PublishCommand) {
+      const publishCommand: PublishCommand = command as PublishCommand;
+
+      for (const c of this.messageQueueClientConnections) {
+        if (c.isSubscribed(publishCommand.channel)) {
+          c.send(publishCommand);
         }
+      }
+    }
 
-        if (command instanceof SubscribeCommand) {
-            const subscribeCommand: SubscribeCommand = command as SubscribeCommand;
+    if (command instanceof SubscribeCommand) {
+      const subscribeCommand: SubscribeCommand = command as SubscribeCommand;
 
-            messageQueueClientConnection.subscribe(subscribeCommand.channel);
-        }
+      messageQueueClientConnection.subscribe(subscribeCommand.channel);
+    }
+  }
 
-    });
+  protected onClose(messageQueueClientConnection: MessageQueueClientConnection): void {
+    this.removeMessageQueueClientConnection(messageQueueClientConnection);
+  }
 
-    messageQueueClientConnection.socket.on('close', () => {
-        const index: number = messageQueueClientConnections.indexOf(messageQueueClientConnection);
+  protected removeMessageQueueClientConnection(messageQueueClientConnection: MessageQueueClientConnection): void {
+    const index: number = this.messageQueueClientConnections.indexOf(messageQueueClientConnection);
 
-        if (index > -1) {
-            messageQueueClientConnections.splice(index, 1);
-        }
-    });
-
-});
-
-console.log(`listening on port 8801`);
+    if (index > -1) {
+      this.messageQueueClientConnections.splice(index, 1);
+    }
+  }
+}

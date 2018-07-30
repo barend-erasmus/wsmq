@@ -1,13 +1,12 @@
 {
   "name": "wsmq",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "description": "Web Socket Message Queue",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "gulp build & tsc",
-    "lint": "tslint ./src/**/*.ts --fix --exclude ./src/**/*.d.ts",
-    "start": "npm run build & node ./dist/example.js --dev"
+    "build": "tsc",
+    "start": "npm run build & node ./dist/main.js start --port 8080"
   },
   "repository": {
     "type": "git",
@@ -23,11 +22,17 @@
     "@types/node": "^10.0.9",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.4.0",
+    "prettier": "^1.14.0",
     "run-sequence": "^2.2.1",
     "typescript": "^2.8.3"
   },
   "dependencies": {
+    "chalk": "^2.4.1",
+    "commander": "^2.16.0",
     "uuid": "^3.2.1",
     "ws": "^5.1.1"
+  },
+  "bin": {
+    "wsmq": "./bin/wsmq"
   }
 }
