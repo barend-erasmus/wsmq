@@ -15,7 +15,7 @@ export class MessageQueueClient {
 
   public connect(): Promise<void> {
     return new Promise((resolve: () => void, reject: (err: Error) => void) => {
-      this.socket = typeof WebSocket === 'undefined' ? new WS(this.host) : new WebSocket(this.host);
+      this.socket = typeof WebSocket === 'undefined' ? new WS(this.host) as any : new WebSocket(this.host) as any;
 
       this.socket.onclose = (closeEvent: { code: number }) => this.onClose(closeEvent);
 

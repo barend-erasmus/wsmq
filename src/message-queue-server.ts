@@ -4,40 +4,73 @@ import { Command } from './commands/command';
 import { PublishCommand } from './commands/publish';
 import { SubscribeCommand } from './commands/subscribe';
 import { MessageQueueClientConnection } from './models/message-queue-client-connection';
+import * as http from 'http';
+import * as express from 'express';
+import * as bodyParser from 'body-parser';
 
 export class MessageQueueServer {
   protected commandBuilder: CommandBuilder = null;
 
-  protected messageQueueClientConnections: Array<MessageQueueClientConnection> = null;
+  protected expressApplication: express.Application = null;
 
-  protected server: WS.Server = null;
+  protected httpServer: http.Server = null;
 
-  constructor(protected port: number) {}
+  protected messageQueueClientConnections: Array<MessageQueueClientConnection> = [];
 
-  public async listen(): Promise<void> {
+  protected webSocketServer: WS.Server = null;
+
+  constructor(protected port: number) {
     this.commandBuilder = new CommandBuilder();
 
-    this.messageQueueClientConnections = [];
+    this.configureExpressApplication();
 
-    this.server = new WS.Server({ port: this.port });
+    this.configureHttpServer();
 
-    this.server.on('connection', (socket: WebSocket) => this.onConnection(socket));
+    this.configureWebSocketServer();
   }
 
-  protected onConnection(socket: WS.WebSocket): void {
+  public async listen(): Promise<void> {
+    
+
+    this.httpServer.listen(this.port);
+  }
+
+  protected configureExpressApplication(): void {
+    this.expressApplication = express();
+
+    this.expressApplication.use(bodyParser.json());
+
+    this.expressApplication.post('/', (request: express.Request, response: express.Response) => {
+      this.onMessage(request.body, null);
+
+      response.send('OK');
+    });
+  }
+
+  protected configureHttpServer(): void {
+    this.httpServer = http.createServer(this.expressApplication);
+  }
+
+  protected configureWebSocketServer(): void {
+    this.webSocketServer = new WS.Server({ server: this.httpServer });
+
+    this.webSocketServer.on('connection', (socket: WebSocket) => this.onConnection(socket));
+  }
+
+  protected onConnection(socket: WebSocket): void {
     const messageQueueClientConnection: MessageQueueClientConnection = new MessageQueueClientConnection(socket, []);
 
     this.messageQueueClientConnections.push(messageQueueClientConnection);
 
     messageQueueClientConnection.socket.on('message', (message: string) =>
-      this.onMessage(message, messageQueueClientConnection),
+      this.onMessage(JSON.parse(message), messageQueueClientConnection),
     );
 
     messageQueueClientConnection.socket.on('close', () => this.onClose(messageQueueClientConnection));
   }
 
-  protected onMessage(message: string, messageQueueClientConnection: MessageQueueClientConnection): void {
-    const command: Command = this.commandBuilder.build(JSON.parse(message));
+  protected onMessage(obj: any, messageQueueClientConnection: MessageQueueClientConnection): void {
+    const command: Command = this.commandBuilder.build(obj);
 
     if (command instanceof PublishCommand) {
       const publishCommand: PublishCommand = command as PublishCommand;
