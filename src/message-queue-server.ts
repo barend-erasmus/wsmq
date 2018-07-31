@@ -8,6 +8,7 @@ import * as http from 'http';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import { MessageQueueClient } from './message-queue-client';
+import { DomainEvents } from './domain-events';
 
 export class MessageQueueServer {
   protected commandBuilder: CommandBuilder = null;
@@ -76,17 +77,26 @@ export class MessageQueueServer {
     if (command instanceof PublishCommand) {
       const publishCommand: PublishCommand = command as PublishCommand;
 
+      DomainEvents.onPublishCommandRecieved(null, publishCommand.channel, publishCommand.data);
+
       for (const c of this.messageQueueClientConnections) {
         if (c.isSubscribed('global-broadcast-channel')) {
           c.send(publishCommand);
+
+          DomainEvents.onPublishCommandSent(null, publishCommand.channel, publishCommand.data);
         } else if (c.isSubscribed(publishCommand.channel)) {
           c.send(publishCommand);
+
+          DomainEvents.onPublishCommandSent(null, publishCommand.channel, publishCommand.data);
         }
       }
     }
 
     if (command instanceof SubscribeCommand) {
       const subscribeCommand: SubscribeCommand = command as SubscribeCommand;
+
+      // TODO: Implement
+      // DomainEvents.onSubscribeCommandRecieved(null, subscribeCommand.channel);
 
       messageQueueClientConnection.subscribe(subscribeCommand.channel);
     }
@@ -113,7 +123,11 @@ export class MessageQueueServer {
       const messageQueueClient: MessageQueueClient = new MessageQueueClient(node, (channel: string, data: any, messageQueueClient: MessageQueueClient) => {
         for (const c of this.messageQueueClientConnections) {
           if (c.isSubscribed(channel)) {
-            c.send(new PublishCommand(channel, data));
+            const publishCommand: PublishCommand = new PublishCommand(channel, data);
+
+            c.send(publishCommand);
+
+            DomainEvents.onPublishCommandSent(null, publishCommand.channel, publishCommand.data);
           }
         }
       }, ['global-broadcast-channel']);

@@ -1,6 +1,6 @@
 # WSMQ
 
-Web Socket Message Queue
+Web Socket Message Queue (WSMQ) allows you to send and recieve messages to and from your clients on your website.
 
 ## Getting Started
 
@@ -38,6 +38,6 @@ Usage: start [options]
 
 * [Node.js (Typescript)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/clients/node-js-typescript.md)
 * [Node.js (Javascript)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/clients/node-js-javascript.md)
-* [CSharp (WebSockets)]()
-* [CSharp (REST)]()
+* [CSharp (WebSockets)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/clients/csharp-websockets.md)
+* [CSharp (REST)](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/clients/csharp-rest.md)
 * [cURL](https://github.com/barend-erasmus/wsmq/blob/master/docs/examples/clients/curl.md)

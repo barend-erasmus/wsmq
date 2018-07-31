@@ -3,12 +3,16 @@
 ```typescript
 import { MessageQueueClient } from 'wsmq';
 
+const host: string = 'ws://127.0.0.1:8080';
+
+const channels: Array<string> = ['<insert-your-channel-here>'];
+
 const messageQueueClient: MessageQueueClient = new MessageQueueClient(
-    'ws://127.0.0.1:8080',
+    host,
     (channel: string, data: any, messageQueueClient: MessageQueueClient) => {
         // TODO: Handle messages here...
     },
-    ['<insert-your-channel-here>'],
+    channels,
 );
 
 await messageQueueClient.connect();

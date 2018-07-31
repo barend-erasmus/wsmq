@@ -5,10 +5,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const publish_1 = require("../commands/publish");
 const subscribe_1 = require("../commands/subscribe");
+const heartbeat_1 = require("../commands/heartbeat");
 class CommandBuilder {
     constructor() { }
     build(obj) {
         switch (obj.type) {
+            case 'heartbeat':
+                return new heartbeat_1.HeartbeatCommand();
             case 'publish':
                 return new publish_1.PublishCommand(obj.channel, obj.data);
             case 'subscribe':
@@ -20,7 +23,7 @@ class CommandBuilder {
 }
 exports.CommandBuilder = CommandBuilder;
 
-},{"../commands/publish":4,"../commands/subscribe":5}],3:[function(require,module,exports){
+},{"../commands/heartbeat":4,"../commands/publish":5,"../commands/subscribe":6}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class Command {
@@ -35,6 +38,17 @@ exports.Command = Command;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const command_1 = require("./command");
+class HeartbeatCommand extends command_1.Command {
+    constructor() {
+        super(null, 'heartbeat');
+    }
+}
+exports.HeartbeatCommand = HeartbeatCommand;
+
+},{"./command":3}],5:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const command_1 = require("./command");
 class PublishCommand extends command_1.Command {
     constructor(channel, data) {
         super(channel, 'publish');
@@ -43,7 +57,7 @@ class PublishCommand extends command_1.Command {
 }
 exports.PublishCommand = PublishCommand;
 
-},{"./command":3}],5:[function(require,module,exports){
+},{"./command":3}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const command_1 = require("./command");
@@ -54,7 +68,7 @@ class SubscribeCommand extends command_1.Command {
 }
 exports.SubscribeCommand = SubscribeCommand;
 
-},{"./command":3}],6:[function(require,module,exports){
+},{"./command":3}],7:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -110,7 +124,7 @@ class DesktopNotificationHelper {
 }
 exports.DesktopNotificationHelper = DesktopNotificationHelper;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -125,9 +139,11 @@ const message_queue_client_1 = require("../message-queue-client");
 const desktop_notification_helper_1 = require("./desktop-notification-helper");
 const toastr_notification_helper_1 = require("./toastr-notification-helper");
 (() => __awaiter(this, void 0, void 0, function* () {
-    const messageQueueClient = new message_queue_client_1.MessageQueueClient('ws://127.0.0.1:8080', (channel, data, messageQueueClient) => {
+    const host = 'ws://127.0.0.1:8080';
+    const channels = ['wsmq-demo'];
+    const messageQueueClient = new message_queue_client_1.MessageQueueClient(host, (channel, data, messageQueueClient) => {
         showNotification(data.image, data.message, data.title, data.url);
-    }, ['wsmq-demo']);
+    }, channels);
     yield messageQueueClient.connect();
 }))();
 function showNotification(image, message, title, url) {
@@ -139,7 +155,7 @@ function showNotification(image, message, title, url) {
     });
 }
 
-},{"../message-queue-client":9,"./desktop-notification-helper":6,"./toastr-notification-helper":8}],8:[function(require,module,exports){
+},{"../message-queue-client":11,"./desktop-notification-helper":7,"./toastr-notification-helper":9}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const toastr = require("toastr");
@@ -154,18 +170,49 @@ class ToastrNotificationHelper {
 }
 exports.ToastrNotificationHelper = ToastrNotificationHelper;
 
-},{"toastr":11}],9:[function(require,module,exports){
+},{"toastr":13}],10:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+class DomainEvents {
+    static onConnect(host) {
+        console.log(`connected to ${host}`);
+    }
+    static onConnectFailure(host) {
+        console.log(`failed to connect to ${host}`);
+    }
+    static onDisconnect(host) {
+        console.log(`disconnected from ${host}`);
+    }
+    static onPublishCommandRecieved(host, channel, data) {
+        console.log(`received publish command from ${host} on channel ${channel}`);
+    }
+    static onReconnect(host) {
+        console.log(`reconnecting to ${host}`);
+    }
+    static onPublishCommandSent(host, channel, data) {
+        console.log(`sent publish command to ${host} on channel ${channel}`);
+    }
+    static onSubscribeCommandSent(host, channel) {
+        console.log(`sent subscribe command to ${host} on channel ${channel}`);
+    }
+}
+exports.DomainEvents = DomainEvents;
+
+},{}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const WS = require("ws");
 const command_builder_1 = require("./builders/command-builder");
 const publish_1 = require("./commands/publish");
 const subscribe_1 = require("./commands/subscribe");
+const heartbeat_1 = require("./commands/heartbeat");
+const domain_events_1 = require("./domain-events");
 class MessageQueueClient {
     constructor(host, onMessageFn, subscribedChannels) {
         this.host = host;
         this.onMessageFn = onMessageFn;
         this.subscribedChannels = subscribedChannels;
+        this.heartbeatInterval = null;
         this.socket = null;
     }
     connect() {
@@ -173,12 +220,16 @@ class MessageQueueClient {
             this.socket = typeof WebSocket === 'undefined' ? new WS(this.host) : new WebSocket(this.host);
             this.socket.onclose = (closeEvent) => this.onClose(closeEvent);
             this.socket.onmessage = (event) => this.onMessage(event);
-            this.socket.onopen = (openEvent) => this.onOpen(openEvent, resolve);
+            this.socket.onopen = (openEvent) => {
+                domain_events_1.DomainEvents.onConnect(this.host);
+                this.onOpen(openEvent, resolve);
+            };
             this.socket.onerror = (event) => {
                 this.socket.onclose = () => { };
                 this.socket.close();
+                domain_events_1.DomainEvents.onConnectFailure(this.host);
                 this.delay(2000).then(() => {
-                    console.log('reconnecting');
+                    domain_events_1.DomainEvents.onReconnect(this.host);
                     this.connect();
                 });
             };
@@ -186,6 +237,7 @@ class MessageQueueClient {
     }
     send(channel, data) {
         this.socket.send(JSON.stringify(new publish_1.PublishCommand(channel, data)));
+        domain_events_1.DomainEvents.onPublishCommandSent(this.host, channel, data);
     }
     delay(milliseconds) {
         return new Promise((resolve, reject) => {
@@ -194,8 +246,10 @@ class MessageQueueClient {
     }
     onClose(closeEvent) {
         if (closeEvent.code === 1000) {
+            domain_events_1.DomainEvents.onDisconnect(this.host);
             return;
         }
+        domain_events_1.DomainEvents.onReconnect(this.host);
         this.connect();
     }
     onMessage(event) {
@@ -203,6 +257,7 @@ class MessageQueueClient {
         const command = commandBuilder.build(JSON.parse(event.data));
         if (command instanceof publish_1.PublishCommand) {
             const publishCommand = command;
+            domain_events_1.DomainEvents.onPublishCommandRecieved(this.host, publishCommand.channel, publishCommand.data);
             if (this.onMessageFn) {
                 this.onMessageFn(publishCommand.channel, publishCommand.data, this);
             }
@@ -213,14 +268,20 @@ class MessageQueueClient {
             for (const channel of this.subscribedChannels) {
                 const subscribeCommand = new subscribe_1.SubscribeCommand(channel);
                 this.socket.send(JSON.stringify(subscribeCommand));
+                domain_events_1.DomainEvents.onSubscribeCommandSent(this.host, subscribeCommand.channel);
             }
             callback();
         }
     }
+    startHeartbeatInterval() {
+        this.heartbeatInterval = setInterval(() => {
+            this.socket.send(JSON.stringify(new heartbeat_1.HeartbeatCommand()));
+        }, 2000);
+    }
 }
 exports.MessageQueueClient = MessageQueueClient;
 
-},{"./builders/command-builder":2,"./commands/publish":4,"./commands/subscribe":5,"ws":1}],10:[function(require,module,exports){
+},{"./builders/command-builder":2,"./commands/heartbeat":4,"./commands/publish":5,"./commands/subscribe":6,"./domain-events":10,"ws":1}],12:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.3.1
  * https://jquery.com/
@@ -10586,7 +10647,7 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /*
  * Toastr
  * Copyright 2012-2015
@@ -11064,5 +11125,5 @@ return jQuery;
     }
 }));
 
-},{"jquery":10}]},{},[7])(7)
+},{"jquery":12}]},{},[8])(8)
 });

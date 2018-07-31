@@ -6,8 +6,11 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "build-demo": "tsc & browserify ./dist/demo/main.js --ignore body-parser --ignore commander --ignore express --ignore ws --s WSMQDemo -o ./src/demo/main.bundle.js & http-server -o http://localhost:8082/index.html -p 8082 ./src/demo",
-    "start": "npm run build & node ./dist/main.js start --port 8080"
+    "build-demo": "tsc & browserify ./dist/demo/main.js --ignore body-parser --ignore commander --ignore express --ignore ws --s WSMQDemo -o ./src/demo/main.bundle.js & uglifyjs ./src/demo/main.bundle.js -o ./src/demo/main.bundle.min.js",
+    "start": "npm run build & node ./dist/main.js start --port 8080",
+    "start-1": "npm run build & node ./dist/main.js start --nodes ws://127.0.0.1:8081 --port 8080",
+    "start-2": "npm run build & node ./dist/main.js start --nodes ws://127.0.0.1:8080 --port 8081",
+    "start-demo": "npm run build-demo & http-server -c -1 -o http://localhost:8082/index.html -p 8082 ./src/demo"
   },
   "repository": {
     "type": "git",

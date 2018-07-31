@@ -3,12 +3,16 @@ import { DesktopNotificationHelper } from './desktop-notification-helper';
 import { ToastrNotificationHelper } from './toastr-notification-helper';
 
 (async () => {
+  const host: string = 'ws://127.0.0.1:8080';
+
+  const channels: Array<string> = ['wsmq-demo'];
+
   const messageQueueClient = new MessageQueueClient(
-    'ws://127.0.0.1:8080',
+    host,
     (channel: string, data: any, messageQueueClient: MessageQueueClient) => {
       showNotification(data.image, data.message, data.title, data.url);
     },
-    ['wsmq-demo'],
+    channels,
   );
 
   await messageQueueClient.connect();

@@ -3,12 +3,16 @@
 ```javascript
 const { MessageQueueClient } = require('wsmq');
 
+const host = 'ws://127.0.0.1:8080';
+
+const channels = ['<insert-your-channel-here>'];
+
 const messageQueueClient = new MessageQueueClient(
-    'ws://127.0.0.1:8080',
+    host,
     (channel, data, messageQueueClient) => {
         // TODO: Handle messages here...
     },
-    ['<insert-your-channel-here>'],
+    channels,
 );
 
 await messageQueueClient.connect();

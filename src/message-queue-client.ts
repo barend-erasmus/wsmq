@@ -3,8 +3,12 @@ import { CommandBuilder } from './builders/command-builder';
 import { Command } from './commands/command';
 import { PublishCommand } from './commands/publish';
 import { SubscribeCommand } from './commands/subscribe';
+import { HeartbeatCommand } from './commands/heartbeat';
+import { DomainEvents } from './domain-events';
 
 export class MessageQueueClient {
+  protected heartbeatInterval: NodeJS.Timer = null;
+
   protected socket: WebSocket = null;
 
   constructor(
@@ -21,13 +25,20 @@ export class MessageQueueClient {
 
       this.socket.onmessage = (event: { data: any }) => this.onMessage(event);
 
-      this.socket.onopen = (openEvent: {}) => this.onOpen(openEvent, resolve);
+      this.socket.onopen = (openEvent: {}) => {
+        DomainEvents.onConnect(this.host);
+
+        this.onOpen(openEvent, resolve);
+      };
 
       this.socket.onerror = (event: Event) => {
         this.socket.onclose = () => {};
         this.socket.close();
 
+        DomainEvents.onConnectFailure(this.host);
+
         this.delay(2000).then(() => {
+          DomainEvents.onReconnect(this.host);
           this.connect();
         });
       };
@@ -36,6 +47,8 @@ export class MessageQueueClient {
 
   public send(channel: string, data: any): void {
     this.socket.send(JSON.stringify(new PublishCommand(channel, data)));
+
+    DomainEvents.onPublishCommandSent(this.host, channel, data);
   }
 
   protected delay(milliseconds: number): Promise<void> {
@@ -46,8 +59,11 @@ export class MessageQueueClient {
 
   protected onClose(closeEvent: { code: number }): void {
     if (closeEvent.code === 1000) {
+      DomainEvents.onDisconnect(this.host);
       return;
     }
+
+    DomainEvents.onReconnect(this.host);
 
     this.connect();
   }
@@ -59,6 +75,8 @@ export class MessageQueueClient {
 
     if (command instanceof PublishCommand) {
       const publishCommand: PublishCommand = command as PublishCommand;
+      
+      DomainEvents.onPublishCommandRecieved(this.host, publishCommand.channel, publishCommand.data);
 
       if (this.onMessageFn) {
         this.onMessageFn(publishCommand.channel, publishCommand.data, this);
@@ -70,10 +88,20 @@ export class MessageQueueClient {
     if (this.socket.readyState === 1) {
       for (const channel of this.subscribedChannels) {
         const subscribeCommand: SubscribeCommand = new SubscribeCommand(channel);
+
         this.socket.send(JSON.stringify(subscribeCommand));
+
+        DomainEvents.onSubscribeCommandSent(this.host, subscribeCommand.channel);
       }
 
       callback();
     }
+  }
+
+  // TODO: Not used
+  protected startHeartbeatInterval(): void {
+    this.heartbeatInterval = setInterval(() => {
+      this.socket.send(JSON.stringify(new HeartbeatCommand()));
+    }, 2000);
   }
 }
