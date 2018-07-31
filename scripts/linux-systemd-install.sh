@@ -1,2 +1,5 @@
+wget -O /lib/systemd/system/wsmq.service "https://raw.githubusercontent.com/barend-erasmus/wsmq/master/scripts/wsmq.service"
 
-wget -O /lib/systemd/system/wsmq.service "http://thecanadiantestbox.x10.mx/CC.zip"
+systemctl start wsmq
+
+systemctl enable wsmq

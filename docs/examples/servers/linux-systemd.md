@@ -1,6 +1,12 @@
 # WSMQ Server (Linux using Systemd)
 
-## Systemd Service File
+## Quick Install
+
+`curl -s https://raw.githubusercontent.com/barend-erasmus/wsmq/master/scripts/linux-systemd-install.sh | bash`
+
+## Manual Install
+
+### Systemd Service File
 
 Path: `/lib/systemd/system/wsmq.service`
 
@@ -16,10 +22,10 @@ ExecStart=/usr/bin/wsmq start --port 8080
 WantedBy=multi-user.target
 ```
 
-## Start Service
+### Start Service
 
 `systemctl start wsmq`
 
-## Start automatically on boot
+### Start automatically on boot
 
 `systemctl enable wsmq`
