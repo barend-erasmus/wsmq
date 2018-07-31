@@ -2,7 +2,7 @@
 
 ## Systemd Service File
 
-Path: ` /lib/systemd/system/wsmq.service`
+Path: `/lib/systemd/system/wsmq.service`
 
 ```
 [Unit]
@@ -10,7 +10,7 @@ Description=WSMQ Service
 
 [Service]
 Type=simple
-ExecStart=/usr/sbin/nginx
+ExecStart=/usr/bin/wsmq start --port 8080
 
 [Install]
 WantedBy=multi-user.target
