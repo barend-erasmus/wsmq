@@ -10,7 +10,8 @@
     "start": "npm run build & node ./dist/main.js start --port 8080",
     "start-1": "npm run build & node ./dist/main.js start --nodes ws://127.0.0.1:8081 --port 8080",
     "start-2": "npm run build & node ./dist/main.js start --nodes ws://127.0.0.1:8080 --port 8081",
-    "start-demo": "npm run build-demo & http-server -c -1 -o http://localhost:8082/index.html -p 8082 ./src/demo"
+    "start-demo": "npm run build-demo & http-server -c -1 -o http://localhost:8082/index.html -p 8082 ./src/demo",
+    "test": "npm run build"
   },
   "repository": {
     "type": "git",
