@@ -1,5 +1,7 @@
 # WSMQ
 
+![Travis CI](https://api.travis-ci.org/barend-erasmus/wsmq.svg?branch=master)
+
 Web Socket Message Queue (WSMQ) allows you to send and recieve messages to and from your clients on your website.
 
 ## Getting Started
